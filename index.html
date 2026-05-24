@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fridge Chef — Resep dari Bahan Seadanya</title>
+<meta name="description" content="Input bahan di kulkas, dapat 3 resep masakan. Powered by Xiaomi MiMo.">
+<style>
+:root {
+  --bg: #0a0f0a;
+  --surface: #14181c;
+  --surface-2: #1c2128;
+  --border: #2a3038;
+  --text: #f5f5f7;
+  --text-dim: #a1a8b0;
+  --accent: #22c55e;
+  --accent-2: #84cc16;
+  --warning: #f59e0b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  background-image: radial-gradient(circle at 10% 0%, rgba(34,197,94,0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 90% 100%, rgba(132,204,22,0.08) 0%, transparent 50%);
+}
+header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(10,15,10,0.8);
+  backdrop-filter: blur(12px);
+  position: sticky; top: 0; z-index: 50;
+}
+.brand { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.25rem; }
+.brand-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem;
+}
+.btn {
+  padding: 0.6rem 1.2rem; border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface); color: var(--text);
+  cursor: pointer; font-weight: 500;
+  transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+}
+.btn:hover { background: var(--surface-2); border-color: var(--accent); }
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border: none; color: #052e16; font-weight: 700;
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(34,197,94,0.3); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+main { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+.hero { text-align: center; padding: 2rem 1rem; }
+.hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; line-height: 1.1; margin-bottom: 1rem; }
+.hero h1 .gradient { background: linear-gradient(135deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.hero p { color: var(--text-dim); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+.input-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+}
+.ingredients-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+  min-height: 60px;
+}
+.ingredient-tag {
+  background: var(--accent);
+  color: #052e16;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.ingredient-tag button {
+  background: rgba(0,0,0,0.2); border: none; color: inherit;
+  width: 18px; height: 18px; border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem;
+}
+.ingredients-input input {
+  flex: 1; min-width: 120px;
+  background: transparent; border: none; color: var(--text);
+  padding: 0.4rem;
+  font-size: 0.95rem;
+}
+.ingredients-input input:focus { outline: none; }
+.quick-add { margin-top: 1rem; }
+.quick-add-title { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 0.5rem; }
+.chip-row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.chip {
+  padding: 0.3rem 0.7rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.options-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.8rem; margin-top: 1rem; }
+.field label { display: block; margin-bottom: 0.3rem; color: var(--text-dim); font-size: 0.85rem; }
+.field select, .field input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+}
+.recipes { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+.recipe-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: all 0.2s;
+}
+.recipe-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.recipe-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--accent); }
+.recipe-meta { display: flex; gap: 1rem; color: var(--text-dim); font-size: 0.85rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.recipe-meta span { display: flex; align-items: center; gap: 0.3rem; }
+.recipe-section-title { font-weight: 600; margin: 1rem 0 0.4rem; color: var(--accent-2); font-size: 0.95rem; }
+.recipe-card ul, .recipe-card ol { padding-left: 1.5rem; line-height: 1.7; }
+.recipe-card li { margin-bottom: 0.3rem; }
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center; justify-content: center;
+  z-index: 100;
+}
+.modal.open { display: flex; }
+.modal-content {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: min(500px, 90vw);
+}
+.modal-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.modal-close { background: none; border: none; color: var(--text-dim); font-size: 1.5rem; cursor: pointer; }
+.field { margin-bottom: 1rem; }
+.empty { text-align: center; color: var(--text-dim); padding: 3rem 1rem; }
+.empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+footer { text-align: center; padding: 2rem 1rem; color: var(--text-dim); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 3rem; }
+.toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: var(--surface-2); border: 1px solid var(--border); padding: 0.8rem 1.5rem; border-radius: 8px; z-index: 200; display: none; }
+.toast.show { display: block; animation: slideUp 0.3s; }
+@keyframes slideUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-icon">🍳</div>
+    <span>Fridge Chef</span>
+  </div>
+  <div style="display: flex; gap: 0.5rem;">
+    <button class="btn" onclick="openSettings()">⚙ Settings</button>
+    <a class="btn" href="https://github.com/Fikrizz" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>Buka kulkas. <span class="gradient">Dapat 3 resep.</span></h1>
+    <p>Input apa aja yang lagi ada di rumah. AI bikin resep yang masuk akal, gak suruh kamu beli 17 bumbu langka.</p>
+  </section>
+
+  <div class="input-card">
+    <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">🥬 Bahan yang ada</label>
+    <div class="ingredients-input" id="ingredientsBox">
+      <input type="text" id="ingredientInput" placeholder="Ketik bahan, tekan Enter (contoh: telur, nasi sisa, kecap)">
+    </div>
+    <div class="quick-add">
+      <div class="quick-add-title">⚡ Quick add:</div>
+      <div class="chip-row" id="quickChips"></div>
+    </div>
+    <div class="options-row">
+      <div class="field">
+        <label>Tipe makanan</label>
+        <select id="mealType">
+          <option value="apa saja">Apa saja</option>
+          <option value="sarapan">Sarapan</option>
+          <option value="makan siang">Makan siang</option>
+          <option value="makan malam">Makan malam</option>
+          <option value="cemilan">Cemilan</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Waktu masak</label>
+        <select id="cookTime">
+          <option value="cepat (≤15 menit)">Cepat (≤15 mnt)</option>
+          <option value="sedang (15-30 menit)" selected>Sedang (15-30 mnt)</option>
+          <option value="santai (30-60 menit)">Santai (30-60 mnt)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Diet</label>
+        <select id="diet">
+          <option value="bebas">Bebas</option>
+          <option value="vegetarian">Vegetarian</option>
+          <option value="halal">Halal</option>
+          <option value="rendah karbo">Rendah karbo</option>
+          <option value="tinggi protein">Tinggi protein</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Style</label>
+        <select id="cuisine">
+          <option value="indonesia" selected>Indonesia</option>
+          <option value="asia (jepang/korea/cina)">Asia</option>
+          <option value="western">Western</option>
+          <option value="middle eastern">Middle Eastern</option>
+          <option value="apa saja">Apa saja</option>
+        </select>
+      </div>
+    </div>
+    <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem; flex-wrap: wrap;">
+      <button class="btn btn-primary" id="genBtn" onclick="generateRecipes()">
+        <span id="genBtnText">🍳 Bikin 3 Resep</span>
+      </button>
+      <button class="btn" onclick="clearAll()">Clear</button>
+    </div>
+  </div>
+
+  <div id="recipesContainer"></div>
+</main>
+
+<div class="modal" id="settingsModal">
+  <div class="modal-content">
+    <div class="modal-title">
+      <h2>⚙ Settings</h2>
+      <button class="modal-close" onclick="closeSettings()">×</button>
+    </div>
+    <div class="field">
+      <label>MiMo API Key (optional)</label>
+      <input type="password" id="apiKey" placeholder="kosongin buat demo gratis">
+      <small style="color: var(--text-dim); font-size: 0.8rem;">Get key: <a href="https://api.xiaomimimo.com" target="_blank" style="color: var(--accent);">api.xiaomimimo.com</a></small>
+    </div>
+    <div class="field">
+      <label>Model</label>
+      <select id="model">
+        <option value="mimo-v2.5-reasoning">MiMo V2.5 Reasoning</option>
+        <option value="mimo-v2.5" selected>MiMo V2.5 (faster)</option>
+      </select>
+    </div>
+    <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+      <button class="btn" onclick="testConnection()">Test</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer>
+  Powered by <strong>Xiaomi MiMo</strong> · <a href="https://100t.xiaomimimo.com" target="_blank" style="color: var(--accent);">MiMo 100T</a> · <a href="https://github.com/Fikrizz" target="_blank" style="color: var(--accent);">@Fikrizz</a>
+</footer>
+
+<script>
+const STORAGE_KEY = 'fridge-chef-settings';
+const ENDPOINTS = { mimo: 'https://api.xiaomimimo.com/v1/chat/completions', pollinations: 'https://text.pollinations.ai/openai' };
+const QUICK_INGREDIENTS = ['telur', 'nasi', 'mie instan', 'bawang putih', 'bawang merah', 'cabai', 'kecap', 'tahu', 'tempe', 'ayam', 'sawi', 'tomat', 'wortel', 'sosis', 'keju', 'roti'];
+
+let ingredients = [];
+
+function renderQuickChips() {
+  document.getElementById('quickChips').innerHTML = QUICK_INGREDIENTS.map(i => `<span class="chip" onclick="addIngredient('${i}')">+ ${i}</span>`).join('');
+}
+function renderIngredients() {
+  const box = document.getElementById('ingredientsBox');
+  const input = document.getElementById('ingredientInput');
+  box.querySelectorAll('.ingredient-tag').forEach(el => el.remove());
+  ingredients.forEach((ing, idx) => {
+    const tag = document.createElement('span');
+    tag.className = 'ingredient-tag';
+    tag.innerHTML = `${escapeHtml(ing)} <button onclick="removeIngredient(${idx})">×</button>`;
+    box.insertBefore(tag, input);
+  });
+}
+function addIngredient(name) {
+  const v = name.trim().toLowerCase();
+  if (!v || ingredients.includes(v)) return;
+  ingredients.push(v);
+  renderIngredients();
+}
+function removeIngredient(idx) { ingredients.splice(idx, 1); renderIngredients(); }
+
+document.getElementById('ingredientInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    addIngredient(e.target.value);
+    e.target.value = '';
+  } else if (e.key === 'Backspace' && !e.target.value && ingredients.length) {
+    ingredients.pop();
+    renderIngredients();
+  }
+});
+
+function loadSettings() {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  document.getElementById('apiKey').value = saved.apiKey || '';
+  document.getElementById('model').value = saved.model || 'mimo-v2.5';
+}
+function saveSettings() {
+  const settings = {
+    apiKey: document.getElementById('apiKey').value.trim(),
+    model: document.getElementById('model').value
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  toast('✓ Saved');
+  closeSettings();
+}
+function getSettings() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+function openSettings() { document.getElementById('settingsModal').classList.add('open'); }
+function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function buildPrompt() {
+  const meal = document.getElementById('mealType').value;
+  const time = document.getElementById('cookTime').value;
+  const diet = document.getElementById('diet').value;
+  const cuisine = document.getElementById('cuisine').value;
+  
+  return `Kamu adalah chef praktis yang ngerti kondisi dapur rumahan Indonesia. User cuma punya bahan ini:
+
+BAHAN: ${ingredients.join(', ')}
+
+PREFERENSI:
+- Tipe: ${meal}
+- Waktu masak: ${time}
+- Diet: ${diet}
+- Style: ${cuisine}
+
+Bikin TEPAT 3 resep yang BISA dibuat dengan bahan tsb (boleh asumsi punya bumbu basic: garam, gula, minyak, lada). Jangan suruh user beli bahan eksotis.
+
+Output dalam format JSON valid berikut (cuma JSON, tanpa markdown fence):
+{
+  "recipes": [
+    {
+      "title": "Nama Resep",
+      "emoji": "🍜",
+      "time": "15 menit",
+      "difficulty": "Mudah",
+      "servings": "2 porsi",
+      "ingredients": ["bahan 1 + takaran", "bahan 2 + takaran"],
+      "steps": ["Langkah 1...", "Langkah 2..."],
+      "tips": "1 tips singkat biar makin enak"
+    }
+  ]
+}`;
+}
+
+async function callAI(prompt) {
+  const settings = getSettings();
+  const messages = [{ role: 'user', content: prompt }];
+  if (settings.apiKey) {
+    try {
+      const res = await fetch(ENDPOINTS.mimo, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${settings.apiKey}` },
+        body: JSON.stringify({ model: settings.model || 'mimo-v2.5', messages, temperature: 0.8 })
+      });
+      if (res.ok) { const data = await res.json(); return { text: data.choices[0].message.content, source: 'MiMo' }; }
+    } catch (e) { console.warn('MiMo failed:', e); }
+  }
+  try {
+    const res = await fetch(ENDPOINTS.pollinations, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'openai', messages, temperature: 0.8 })
+    });
+    if (res.ok) { const data = await res.json(); return { text: data.choices[0].message.content, source: 'Pollinations (demo)' }; }
+  } catch (e) { console.warn('Pollinations failed:', e); }
+  throw new Error('AI service unavailable.');
+}
+
+async function testConnection() {
+  toast('Testing...');
+  try { const r = await callAI('Reply with one word: pong'); toast(`✓ Connected via ${r.source}`); }
+  catch (e) { toast(`✗ ${e.message}`); }
+}
+
+async function generateRecipes() {
+  if (ingredients.length < 2) { toast('Minimal 2 bahan dong'); return; }
+  const btn = document.getElementById('genBtn');
+  const btnText = document.getElementById('genBtnText');
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> Memasak ide...';
+  document.getElementById('recipesContainer').innerHTML = '<div class="empty"><div class="spinner" style="width:32px;height:32px;border-width:3px;"></div><p style="margin-top:1rem;">Chef AI lagi mikir resep terbaik...</p></div>';
+  try {
+    const result = await callAI(buildPrompt());
+    let json = result.text.trim();
+    json = json.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '');
+    const match = json.match(/\{[\s\S]*\}/);
+    if (match) json = match[0];
+    const data = JSON.parse(json);
+    renderRecipes(data.recipes || [], result.source);
+  } catch (e) {
+    document.getElementById('recipesContainer').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>${escapeHtml(e.message)}</p><p style="margin-top:0.5rem;font-size:0.85rem;">Coba bahan beda atau set API key.</p></div>`;
+  } finally {
+    btn.disabled = false;
+    btnText.innerHTML = '🍳 Bikin 3 Resep Lagi';
+  }
+}
+
+function renderRecipes(recipes, source) {
+  if (!recipes.length) { document.getElementById('recipesContainer').innerHTML = '<div class="empty">Tidak ada resep yang dihasilkan</div>'; return; }
+  const html = `<div class="recipes">${recipes.map((r, i) => `
+    <div class="recipe-card">
+      <div class="recipe-title">${r.emoji || '🍽️'} ${escapeHtml(r.title)}</div>
+      <div class="recipe-meta">
+        <span>⏱️ ${escapeHtml(r.time || '')}</span>
+        <span>📊 ${escapeHtml(r.difficulty || '')}</span>
+        <span>🍽️ ${escapeHtml(r.servings || '')}</span>
+      </div>
+      <div class="recipe-section-title">Bahan</div>
+      <ul>${(r.ingredients || []).map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>
+      <div class="recipe-section-title">Langkah</div>
+      <ol>${(r.steps || []).map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ol>
+      ${r.tips ? `<div style="margin-top:1rem;padding:0.8rem;background:var(--surface-2);border-radius:8px;"><strong>💡 Tips:</strong> ${escapeHtml(r.tips)}</div>` : ''}
+      <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+        <button class="btn" onclick="shareRecipe(${i})">🔗 Share</button>
+        <button class="btn" onclick="copyRecipe(${i})">📋 Copy</button>
+      </div>
+    </div>
+  `).join('')}</div>
+  <p style="text-align:center;color:var(--text-dim);font-size:0.85rem;margin-top:1.5rem;">via ${source}</p>`;
+  document.getElementById('recipesContainer').innerHTML = html;
+  window._lastRecipes = recipes;
+}
+
+function recipeToText(i) {
+  const r = window._lastRecipes[i];
+  return `${r.emoji || ''} ${r.title}\n${r.time} · ${r.difficulty} · ${r.servings}\n\nBAHAN:\n${(r.ingredients || []).map(x => '- ' + x).join('\n')}\n\nLANGKAH:\n${(r.steps || []).map((x, j) => (j+1) + '. ' + x).join('\n')}\n\n💡 ${r.tips || ''}\n\nvia Fridge Chef · ${location.href}`;
+}
+function copyRecipe(i) { navigator.clipboard.writeText(recipeToText(i)); toast('✓ Copied'); }
+function shareRecipe(i) {
+  const text = recipeToText(i);
+  if (navigator.share) navigator.share({ title: window._lastRecipes[i].title, text });
+  else { navigator.clipboard.writeText(text); toast('✓ Share text copied'); }
+}
+
+function clearAll() {
+  ingredients = [];
+  renderIngredients();
+  document.getElementById('recipesContainer').innerHTML = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
+
+renderQuickChips();
+loadSettings();
+</script>
+</body>
+</html>
